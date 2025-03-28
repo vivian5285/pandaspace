@@ -5,10 +5,7 @@ WORKDIR /app
 
 # 安装依赖
 COPY package*.json ./
-RUN npm install
-
-# 给 tsc 和 vite 添加执行权限
-RUN chmod +x ./node_modules/.bin/tsc && chmod +x ./node_modules/.bin/vite
+RUN npm install && chmod +x ./node_modules/.bin/* && ls -l ./node_modules/.bin/
 
 # 复制源代码
 COPY . .
@@ -16,8 +13,8 @@ COPY . .
 # 构建
 ARG VITE_API_URL
 ENV VITE_API_URL=$VITE_API_URL
-# 使用完整路径调用 tsc 和 vite
-RUN ./node_modules/.bin/tsc && ./node_modules/.bin/vite build
+# 使用 node 直接执行 tsc 和 vite
+RUN node ./node_modules/typescript/bin/tsc && node ./node_modules/vite/bin/vite.js build
 
 # 生产阶段
 FROM nginx:alpine
