@@ -101,30 +101,30 @@ services:
   # 用户前端
   user-ui:
     build:
-      context: ./user-ui
+      context: ./frontend/user-ui    # ✅ 正确的路径
       dockerfile: Dockerfile
-      args:
-        - VITE_API_BASE_URL=https://api.yourdomain.com
-    container_name: trading-user-ui
+    container_name: ${PROJECT_NAME}-user-ui
     restart: always
     ports:
-      - "3002:80"
+      - ${USER_UI_PORT}:80
     networks:
       - trading_network
+    depends_on:
+      - user-api
 
   # 管理后台前端
   admin-ui:
     build:
-      context: ./admin-ui
+      context: ./frontend/admin-ui
       dockerfile: Dockerfile
-      args:
-        - VITE_API_BASE_URL=https://admin-api.yourdomain.com
-    container_name: trading-admin-ui
+    container_name: ${PROJECT_NAME}-admin-ui
     restart: always
     ports:
-      - "3003:80"
+      - ${ADMIN_UI_PORT}:80
     networks:
       - trading_network
+    depends_on:
+      - admin-api
 
   # Nginx 反向代理
   nginx:

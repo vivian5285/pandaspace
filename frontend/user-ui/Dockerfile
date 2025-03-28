@@ -5,7 +5,7 @@ WORKDIR /app
 
 # 安装依赖
 COPY package*.json ./
-RUN npm ci
+RUN npm install
 
 # 复制源代码
 COPY . .
@@ -26,4 +26,6 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 HEALTHCHECK --interval=30s --timeout=3s \
     CMD wget --quiet --tries=1 --spider http://localhost/ || exit 1
 
-EXPOSE 80 
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"] 
