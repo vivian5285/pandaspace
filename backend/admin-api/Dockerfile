@@ -6,4 +6,4 @@ RUN chmod +x ./node_modules/.bin/nest
 COPY . .
 RUN npm run build
 EXPOSE 3000
-CMD ["npm", "start"] 
+RUN ./node_modules/.bin/nest build
