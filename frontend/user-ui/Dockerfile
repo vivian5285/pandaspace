@@ -7,6 +7,9 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 
+# 给 tsc 添加执行权限
+RUN chmod +x ./node_modules/.bin/tsc
+
 # 复制源代码
 COPY . .
 
