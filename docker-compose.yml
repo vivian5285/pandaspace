@@ -1,58 +1,84 @@
 version: '3.8'
 
+# 通用配置
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-healthcheck: &default-healthcheck
+  interval: 30s
+  timeout: 10s
+  retries: 3
+  start_period: 40s
+
 services:
-  # 数据库
+  # MongoDB
   mongo:
-    image: mongo:5.0
-    container_name: trading-mongo
+    image: mongo:6.0
+    container_name: ${PROJECT_NAME}-mongo
     restart: always
     environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_DATABASE}
     volumes:
       - mongo_data:/data/db
+      - mongo_config:/data/configdb
+      - ./docker/mongo/init:/docker-entrypoint-initdb.d
     ports:
-      - "27017:27017"
+      - ${MONGO_PORT}:27017
     networks:
       - trading_network
+    logging: *default-logging
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      <<: *default-healthcheck
 
-  # 用户 API 服务
+  # 用户 API
   user-api:
     build:
-      context: ./user-api
+      context: ./backend/user-api    # ✅ 正确的相对路径
       dockerfile: Dockerfile
-    container_name: trading-user-api
+    container_name: ${PROJECT_NAME}-user-api
     restart: always
+    env_file:
+      - .env                        # ✅ 使用根目录的 .env
     environment:
-      - NODE_ENV=production
-      - MONGO_URI=mongodb://${MONGO_ROOT_USER}:${MONGO_ROOT_PASSWORD}@mongo:27017/trading?authSource=admin
-      - JWT_SECRET=${JWT_SECRET}
-      - PORT=3000
-    depends_on:
-      - mongo
+      - NODE_ENV=${NODE_ENV}
+      - PORT=${USER_API_PORT}
+      - MONGO_URI=mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongo:27017/${MONGO_DATABASE}?authSource=admin
     ports:
-      - "3000:3000"
+      - ${USER_API_PORT}:3000
     networks:
       - trading_network
+    depends_on:
+      mongo:
+        condition: service_healthy
+    logging: *default-logging
 
-  # 管理后台 API
+  # 管理 API
   admin-api:
     build:
-      context: ./admin-api
+      context: ./backend/admin-api   # ✅ 正确的相对路径
       dockerfile: Dockerfile
-    container_name: trading-admin-api
+    container_name: ${PROJECT_NAME}-admin-api
     restart: always
+    env_file:
+      - .env                        # ✅ 使用根目录的 .env
     environment:
-      - NODE_ENV=production
-      - MONGO_URI=mongodb://${MONGO_ROOT_USER}:${MONGO_ROOT_PASSWORD}@mongo:27017/trading?authSource=admin
-      - JWT_SECRET=${JWT_SECRET}
-      - PORT=3001
-    depends_on:
-      - mongo
+      - NODE_ENV=${NODE_ENV}
+      - PORT=${ADMIN_API_PORT}
+      - MONGO_URI=mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongo:27017/${MONGO_DATABASE}?authSource=admin
     ports:
-      - "3001:3001"
+      - ${ADMIN_API_PORT}:3001
     networks:
       - trading_network
+    depends_on:
+      mongo:
+        condition: service_healthy
+    logging: *default-logging
 
   # 策略引擎
   strategy-engine:
@@ -122,7 +148,12 @@ services:
 
 networks:
   trading_network:
+    name: ${PROJECT_NAME}-network
     driver: bridge
 
 volumes:
+  mongo_data:
+    name: ${PROJECT_NAME}-mongo-data
+  mongo_config:
+    name: ${PROJECT_NAME}-mongo-config 
   mongo_data: 
