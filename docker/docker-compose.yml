@@ -39,12 +39,12 @@ services:
   # 用户 API
   user-api:
     build:
-      context: ../backend/user-api
+      context: ./backend/user-api
       dockerfile: Dockerfile
     container_name: ${PROJECT_NAME}-user-api
     restart: always
     env_file:
-      - ../backend/user-api/.env
+      - ./backend/user-api/.env
     environment:
       - NODE_ENV=${NODE_ENV}
       - PORT=${USER_API_PORT}
@@ -67,12 +67,12 @@ services:
   # 管理 API
   admin-api:
     build:
-      context: ../backend/admin-api
+      context: ./backend/admin-api
       dockerfile: Dockerfile
     container_name: ${PROJECT_NAME}-admin-api
     restart: always
     env_file:
-      - ../backend/admin-api/.env
+      - ./backend/admin-api/.env
     environment:
       - NODE_ENV=${NODE_ENV}
       - PORT=${ADMIN_API_PORT}
