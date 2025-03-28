@@ -4,7 +4,7 @@
   "description": "Admin API for Panda Trade",
   "main": "dist/main.js",
   "scripts": {
-    "build": "npx tsc",
+    "build": "tsc",
     "format": "prettier --write \"src/**/*.ts\"",
     "start": "node dist/main.js",
     "start:dev": "nest start --watch",
@@ -23,7 +23,8 @@
     "rxjs": "^7.8.0",
     "reflect-metadata": "^0.1.13",
     "class-validator": "^0.14.0",
-    "class-transformer": "^0.5.1"
+    "class-transformer": "^0.5.1",
+    "typescript": "^4.x.x"
   },
   "devDependencies": {
     "@nestjs/cli": "^9.0.0",
