@@ -1,0 +1,128 @@
+version: '3.8'
+
+services:
+  # 数据库
+  mongo:
+    image: mongo:5.0
+    container_name: trading-mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+    volumes:
+      - mongo_data:/data/db
+    ports:
+      - "27017:27017"
+    networks:
+      - trading_network
+
+  # 用户 API 服务
+  user-api:
+    build:
+      context: ./user-api
+      dockerfile: Dockerfile
+    container_name: trading-user-api
+    restart: always
+    environment:
+      - NODE_ENV=production
+      - MONGO_URI=mongodb://${MONGO_ROOT_USER}:${MONGO_ROOT_PASSWORD}@mongo:27017/trading?authSource=admin
+      - JWT_SECRET=${JWT_SECRET}
+      - PORT=3000
+    depends_on:
+      - mongo
+    ports:
+      - "3000:3000"
+    networks:
+      - trading_network
+
+  # 管理后台 API
+  admin-api:
+    build:
+      context: ./admin-api
+      dockerfile: Dockerfile
+    container_name: trading-admin-api
+    restart: always
+    environment:
+      - NODE_ENV=production
+      - MONGO_URI=mongodb://${MONGO_ROOT_USER}:${MONGO_ROOT_PASSWORD}@mongo:27017/trading?authSource=admin
+      - JWT_SECRET=${JWT_SECRET}
+      - PORT=3001
+    depends_on:
+      - mongo
+    ports:
+      - "3001:3001"
+    networks:
+      - trading_network
+
+  # 策略引擎
+  strategy-engine:
+    build:
+      context: ./strategy-engine
+      dockerfile: Dockerfile
+    container_name: trading-strategy-engine
+    restart: always
+    environment:
+      - NODE_ENV=production
+      - MONGO_URI=mongodb://${MONGO_ROOT_USER}:${MONGO_ROOT_PASSWORD}@mongo:27017/trading?authSource=admin
+      - BINANCE_API_KEY=${BINANCE_API_KEY}
+      - BINANCE_API_SECRET=${BINANCE_API_SECRET}
+    depends_on:
+      - mongo
+      - user-api
+    networks:
+      - trading_network
+
+  # 用户前端
+  user-ui:
+    build:
+      context: ./user-ui
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_BASE_URL=https://api.yourdomain.com
+    container_name: trading-user-ui
+    restart: always
+    ports:
+      - "3002:80"
+    networks:
+      - trading_network
+
+  # 管理后台前端
+  admin-ui:
+    build:
+      context: ./admin-ui
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_BASE_URL=https://admin-api.yourdomain.com
+    container_name: trading-admin-ui
+    restart: always
+    ports:
+      - "3003:80"
+    networks:
+      - trading_network
+
+  # Nginx 反向代理
+  nginx:
+    image: nginx:alpine
+    container_name: trading-nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/ssl:/etc/nginx/ssl
+      - ./nginx/logs:/var/log/nginx
+    depends_on:
+      - user-api
+      - admin-api
+      - user-ui
+      - admin-ui
+    networks:
+      - trading_network
+
+networks:
+  trading_network:
+    driver: bridge
+
+volumes:
+  mongo_data: 

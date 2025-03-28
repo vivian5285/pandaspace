@@ -1,0 +1,195 @@
+version: '3.8'
+
+# 通用配置
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-healthcheck: &default-healthcheck
+  interval: 30s
+  timeout: 10s
+  retries: 3
+  start_period: 40s
+
+services:
+  # 数据库
+  mongo:
+    image: mongo:6.0
+    container_name: ${PROJECT_NAME}-mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_DATABASE}
+    volumes:
+      - mongo_data:/data/db
+      - mongo_config:/data/configdb
+      - ./mongo/init:/docker-entrypoint-initdb.d
+    ports:
+      - "27017:27017"
+    networks:
+      - trading_network
+    logging: *default-logging
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      <<: *default-healthcheck
+
+  # 用户 API
+  user-api:
+    build:
+      context: ../backend/user-api
+      dockerfile: Dockerfile
+      args:
+        NODE_ENV: ${NODE_ENV}
+    container_name: ${PROJECT_NAME}-user-api
+    restart: always
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - PORT=${USER_API_PORT}
+      - MONGO_URI=mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongo:27017/${MONGO_DATABASE}?authSource=admin
+      - JWT_SECRET=${JWT_SECRET}
+      - BINANCE_API_KEY=${BINANCE_API_KEY}
+      - BINANCE_API_SECRET=${BINANCE_API_SECRET}
+    depends_on:
+      mongo:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    networks:
+      - trading_network
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      <<: *default-healthcheck
+
+  # 管理 API
+  admin-api:
+    build:
+      context: ../backend/admin-api
+      dockerfile: Dockerfile
+      args:
+        NODE_ENV: ${NODE_ENV}
+    container_name: ${PROJECT_NAME}-admin-api
+    restart: always
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - PORT=${ADMIN_API_PORT}
+      - MONGO_URI=mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongo:27017/${MONGO_DATABASE}?authSource=admin
+      - JWT_ADMIN_SECRET=${JWT_ADMIN_SECRET}
+    depends_on:
+      mongo:
+        condition: service_healthy
+    ports:
+      - "3001:3001"
+    networks:
+      - trading_network
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      <<: *default-healthcheck
+
+  # 用户前端
+  user-ui:
+    build:
+      context: ../frontend/user-ui
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=${USER_API_URL}
+        - NODE_ENV=${NODE_ENV}
+    container_name: ${PROJECT_NAME}-user-ui
+    restart: always
+    ports:
+      - "4000:80"
+    networks:
+      - trading_network
+    depends_on:
+      - user-api
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost"]
+      <<: *default-healthcheck
+
+  # 管理前端
+  admin-ui:
+    build:
+      context: ../frontend/admin-ui
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=${ADMIN_API_URL}
+        - NODE_ENV=${NODE_ENV}
+    container_name: ${PROJECT_NAME}-admin-ui
+    restart: always
+    ports:
+      - "4001:80"
+    networks:
+      - trading_network
+    depends_on:
+      - admin-api
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost"]
+      <<: *default-healthcheck
+
+  # 策略引擎
+  strategy-engine:
+    build:
+      context: ../strategy-engine
+      dockerfile: Dockerfile
+      args:
+        NODE_ENV: ${NODE_ENV}
+    container_name: ${PROJECT_NAME}-strategy
+    restart: always
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - MONGO_URI=mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongo:27017/${MONGO_DATABASE}?authSource=admin
+      - BINANCE_API_KEY=${BINANCE_API_KEY}
+      - BINANCE_API_SECRET=${BINANCE_API_SECRET}
+    depends_on:
+      mongo:
+        condition: service_healthy
+      user-api:
+        condition: service_healthy
+    networks:
+      - trading_network
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3002/health"]
+      <<: *default-healthcheck
+
+  # Nginx 反向代理
+  nginx:
+    image: nginx:alpine
+    container_name: ${PROJECT_NAME}-nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./nginx/logs:/var/log/nginx
+      - ./nginx/cache:/var/cache/nginx
+    depends_on:
+      - user-api
+      - admin-api
+      - user-ui
+      - admin-ui
+    networks:
+      - trading_network
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      <<: *default-healthcheck
+
+networks:
+  trading_network:
+    name: ${PROJECT_NAME}-network
+    driver: bridge
+
+volumes:
+  mongo_data:
+    name: ${PROJECT_NAME}-mongo-data
+  mongo_config:
+    name: ${PROJECT_NAME}-mongo-config 
