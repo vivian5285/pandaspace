@@ -1,22 +1,22 @@
 # 🔥 用完整镜像！
-FROM node:18
+FROM node:18-alpine
 
 WORKDIR /app
 
-# 全局安装最新版本的 npm 和 typescript
-RUN npm install -g npm@latest typescript@latest
+# 复制 package 文件
+COPY package*.json ./
 
-# 确保指定正确的源文件路径
-COPY ["package.json", "package-lock.json*", "./"]
+# 安装依赖
+RUN npm install
 
-# 安装项目依赖，添加 --no-audit 和 --no-fund 来减少警告
-RUN npm install --no-audit --no-fund
+# 给 tsc 添加执行权限
+RUN chmod +x ./node_modules/.bin/tsc
 
-# 复制所有源代码
+# 复制源代码
 COPY . .
 
-# 使用全局安装的 tsc 进行编译
-RUN tsc
+# 使用本地 tsc 编译
+RUN ./node_modules/.bin/tsc
 
 # 启动命令
-CMD ["npm", "start"]
+CMD ["node", "dist/main.js"]
