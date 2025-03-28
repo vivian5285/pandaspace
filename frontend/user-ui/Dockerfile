@@ -13,8 +13,8 @@ COPY . .
 # 构建
 ARG VITE_API_URL
 ENV VITE_API_URL=$VITE_API_URL
-# 使用 node 执行 tsc，避免 Alpine 的 glibc 问题
-RUN node ./node_modules/typescript/bin/tsc && vite build
+# 使用 node 执行 tsc，更稳定的方式
+RUN node ./node_modules/typescript/bin/tsc && npx vite build
 
 # 生产阶段
 FROM nginx:alpine
