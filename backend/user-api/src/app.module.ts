@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
-import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
+import { AuthModule } from './auth/auth.module';
 import { StrategyModule } from './strategy/strategy.module';
-import { EarningsModule } from './earnings/earnings.module';
 import { ReferralModule } from './referral/referral.module';
+import { EarningsModule } from './earnings/earnings.module';
 
 @Module({
   imports: [
@@ -15,11 +15,11 @@ import { ReferralModule } from './referral/referral.module';
     MongooseModule.forRoot(
       process.env.MONGO_URI || 'mongodb://localhost:27017/pandaquant'
     ),
-    AuthModule,
     UserModule,
+    AuthModule,
     StrategyModule,
-    EarningsModule,
     ReferralModule,
+    EarningsModule,
   ],
 })
 export class AppModule {} 
