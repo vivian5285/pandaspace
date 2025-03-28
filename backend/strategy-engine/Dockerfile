@@ -1,18 +1,20 @@
-FROM node:18
+FROM node:20
 
 WORKDIR /app
 
-# 更明确的 COPY 命令
-COPY package.json ./
-COPY package-lock.json* ./
+# 复制 package 文件
+COPY package*.json ./
 
 # 安装依赖
-RUN npm install --no-audit --no-fund
+RUN npm install
 
-# 复制所有源代码
+# 关键修改：给 tsc 添加执行权限
+RUN chmod +x ./node_modules/.bin/tsc
+
+# 复制源代码
 COPY . .
 
-# 编译 TypeScript
-RUN tsc
+# 关键修改：使用完整路径调用 tsc
+RUN ./node_modules/.bin/tsc
 
 CMD ["npm", "start"] 
