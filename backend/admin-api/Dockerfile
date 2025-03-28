@@ -3,15 +3,16 @@ FROM node:18
 
 WORKDIR /app
 
-# 首先全局安装 TypeScript
-RUN npm install -g typescript
+# 全局安装最新版本的 npm 和 typescript
+RUN npm install -g npm@latest typescript@latest
 
-COPY package*.json ./
+# 确保指定正确的源文件路径
+COPY ["package.json", "package-lock.json*", "./"]
 
-# 安装项目依赖
-RUN npm install
+# 安装项目依赖，添加 --no-audit 和 --no-fund 来减少警告
+RUN npm install --no-audit --no-fund
 
-# 复制源代码
+# 复制所有源代码
 COPY . .
 
 # 使用全局安装的 tsc 进行编译

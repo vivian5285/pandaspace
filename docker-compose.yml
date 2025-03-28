@@ -16,12 +16,12 @@ x-healthcheck: &default-healthcheck
 services:
   # MongoDB
   mongo:
-    image: mongo:6.0
+    image: mongo
     container_name: ${PROJECT_NAME}-mongo
     restart: always
     environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+      MONGO_INITDB_ROOT_USERNAME=${MONGO_ROOT_USER}
+      MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASSWORD}
       MONGO_INITDB_DATABASE: ${MONGO_DATABASE}
     volumes:
       - mongo_data:/data/db
@@ -83,7 +83,7 @@ services:
   # 策略引擎
   strategy-engine:
     build:
-      context: ./strategy-engine
+      context: ./backend/strategy-engine
       dockerfile: Dockerfile
     container_name: trading-strategy-engine
     restart: always
