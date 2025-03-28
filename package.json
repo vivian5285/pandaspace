@@ -1,5 +1,8 @@
 {
   "scripts": {
     "build": "npx nest build"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.2"
   }
-} 
+}
