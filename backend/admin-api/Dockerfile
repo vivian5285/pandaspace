@@ -15,7 +15,7 @@ COPY . .
 # 给 tsc 添加执行权限
 RUN chmod +x ./node_modules/.bin/tsc
 
-# 使用本地 tsc 编译
+# 使用完整路径调用 tsc
 RUN ./node_modules/.bin/tsc
 
 # 启动命令
