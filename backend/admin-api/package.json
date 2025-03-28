@@ -4,9 +4,9 @@
   "description": "Admin API for Panda Trade",
   "main": "dist/main.js",
   "scripts": {
-    "build": "nest build",
+    "build": "npx tsc",
     "format": "prettier --write \"src/**/*.ts\"",
-    "start": "nest start",
+    "start": "node dist/main.js",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
