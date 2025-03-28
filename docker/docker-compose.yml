@@ -69,10 +69,10 @@ services:
     build:
       context: ../backend/admin-api
       dockerfile: Dockerfile
-      args:
-        NODE_ENV: ${NODE_ENV}
     container_name: ${PROJECT_NAME}-admin-api
     restart: always
+    env_file:
+      - ../backend/admin-api/.env
     environment:
       - NODE_ENV=${NODE_ENV}
       - PORT=${ADMIN_API_PORT}
@@ -82,12 +82,12 @@ services:
       mongo:
         condition: service_healthy
     ports:
-      - "3001:3001"
+      - "${ADMIN_API_PORT}:3000"
     networks:
       - trading_network
     logging: *default-logging
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       <<: *default-healthcheck
 
   # 用户前端
