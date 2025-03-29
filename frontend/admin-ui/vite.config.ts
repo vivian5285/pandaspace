@@ -11,10 +11,28 @@ export default defineConfig({
       '@pages': path.resolve(__dirname, './src/pages')
     }
   },
+  css: {
+    modules: {
+      localsConvention: 'camelCase'
+    }
+  },
   server: {
     port: 4001,
     proxy: {
       '/api': 'http://localhost:3001'
     }
+  },
+  build: {
+    outDir: 'dist',
+    sourcemap: true,
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html')
+      }
+    }
+  },
+  env: {
+    NODE_ENV: 'production',
+    VITE_BUILD_MODE: 'production'
   },
 }); 
