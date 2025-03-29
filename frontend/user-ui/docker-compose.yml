@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  user-ui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "4002:80"
+    networks:
+      - pandaspace-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+
+networks:
+  pandaspace-network:
+    external: true 

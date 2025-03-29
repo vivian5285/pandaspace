@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  admin-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=mongodb://admin:admin123@mongodb:27017/pandaspace?authSource=admin
+      - JWT_SECRET=your_jwt_secret
+      - BINANCE_API_KEY=your_binance_api_key
+      - BINANCE_API_SECRET=your_binance_api_secret
+      - API_TYPE=admin
+    depends_on:
+      - mongodb
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - pandaspace-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+
+networks:
+  pandaspace-network:
+    external: true 
