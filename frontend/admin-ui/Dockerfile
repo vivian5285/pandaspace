@@ -16,8 +16,15 @@ ENV VITE_API_URL=$VITE_API_URL
 ENV NODE_ENV=production
 ENV VITE_BUILD_MODE=production
 
-# 使用 npm 脚本执行构建
-RUN npm run build
+# 添加调试信息
+RUN echo "Current directory contents:" && ls -la && \
+    echo "Node version:" && node --version && \
+    echo "NPM version:" && npm --version && \
+    echo "TypeScript version:" && npx tsc --version && \
+    echo "Vite version:" && npx vite --version
+
+# 使用 npm 脚本执行构建，添加详细输出
+RUN npm run build --verbose
 
 # 生产阶段
 FROM nginx:alpine
