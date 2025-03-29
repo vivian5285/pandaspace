@@ -5,7 +5,9 @@ WORKDIR /app
 
 # 安装依赖
 COPY package*.json ./
-RUN npm install && chmod +x ./node_modules/.bin/* && ls -l ./node_modules/.bin/
+RUN npm install && \
+    chmod +x ./node_modules/.bin/* && \
+    ls -l ./node_modules/.bin/
 
 # 复制源代码
 COPY . .
@@ -22,6 +24,9 @@ RUN echo "Current directory contents:" && ls -la && \
     echo "NPM version:" && npm --version && \
     echo "TypeScript version:" && npx tsc --version && \
     echo "Vite version:" && npx vite --version
+
+# 确保所有依赖都正确安装
+RUN npm install @types/react @types/react-dom @types/node --save-dev
 
 # 使用 npm 脚本执行构建，添加详细输出
 RUN npm run build --verbose
