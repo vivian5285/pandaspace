@@ -1,8 +1,11 @@
 FROM node:18-alpine
 WORKDIR /app
 COPY package*.json ./
-RUN npm install
-RUN chmod +x ./node_modules/.bin/tsc
+RUN npm ci --only=production
 COPY . .
-RUN ./node_modules/.bin/tsc
-CMD ["node", "dist/main.js"] 
+RUN npx prisma generate
+RUN mkdir -p logs
+ENV NODE_ENV=production
+ENV API_TYPE=user
+EXPOSE 3000
+CMD ["npm", "start"] 

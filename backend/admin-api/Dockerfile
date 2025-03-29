@@ -3,20 +3,27 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# 复制 package 文件
+# 复制 package.json 和 package-lock.json
 COPY package*.json ./
 
 # 安装依赖
-RUN npm install
+RUN npm ci --only=production
 
 # 复制源代码
 COPY . .
 
-# 给 tsc 添加执行权限
-RUN chmod +x ./node_modules/.bin/tsc
+# 生成 Prisma 客户端
+RUN npx prisma generate
 
-# 使用完整路径调用 tsc
-RUN ./node_modules/.bin/tsc
+# 创建日志目录
+RUN mkdir -p logs
+
+# 设置环境变量
+ENV NODE_ENV=production
+ENV API_TYPE=admin
+
+# 暴露端口
+EXPOSE 3000
 
 # 启动命令
-CMD ["node", "dist/main.js"]
+CMD ["npm", "start"]
