@@ -1,6 +1,29 @@
 version: '3.8'
 
 services:
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=admin123
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - pandaspace-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+
   user-api:
     build:
       context: .
@@ -32,32 +55,9 @@ services:
       start_period: 40s
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
 
-  mongodb:
-    image: mongo:latest
-    ports:
-      - "27017:27017"
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=admin
-      - MONGO_INITDB_ROOT_PASSWORD=admin123
-    volumes:
-      - mongodb_data:/data/db
-    networks:
-      - pandaspace-network
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-    healthcheck:
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
-
 networks:
   pandaspace-network:
-    external: true
+    name: pandaspace-network
 
 volumes:
   mongodb_data: 
