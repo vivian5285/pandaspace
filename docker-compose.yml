@@ -1,50 +1,115 @@
 version: '3.8'
 
-# 通用配置
-x-logging: &default-logging
-  driver: "json-file"
-  options:
-    max-size: "10m"
-    max-file: "3"
-
-x-healthcheck: &default-healthcheck
-  interval: 30s
-  timeout: 10s
-  retries: 3
-  start_period: 40s
-
 services:
-  # 后端服务
-  backend:
+  # 管理后台 API
+  admin-api:
     build:
       context: ./backend
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "3001:3000"
     environment:
       - NODE_ENV=production
       - DATABASE_URL=mongodb://mongodb:27017/pandaspace
       - JWT_SECRET=${JWT_SECRET}
       - BINANCE_API_KEY=${BINANCE_API_KEY}
       - BINANCE_API_SECRET=${BINANCE_API_SECRET}
+      - API_TYPE=admin
     depends_on:
       - mongodb
     volumes:
       - ./backend/logs:/app/logs
     networks:
       - pandaspace-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
 
-  # 前端服务
-  frontend:
+  # 用户 API
+  user-api:
     build:
-      context: ./frontend/user-ui
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "3002:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=mongodb://mongodb:27017/pandaspace
+      - JWT_SECRET=${JWT_SECRET}
+      - BINANCE_API_KEY=${BINANCE_API_KEY}
+      - BINANCE_API_SECRET=${BINANCE_API_SECRET}
+      - API_TYPE=user
+    depends_on:
+      - mongodb
+    volumes:
+      - ./backend/logs:/app/logs
+    networks:
+      - pandaspace-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+
+  # 管理后台前端
+  admin-ui:
+    build:
+      context: ./frontend/admin-ui
       dockerfile: Dockerfile
     ports:
       - "80:80"
     depends_on:
-      - backend
+      - admin-api
     networks:
       - pandaspace-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+
+  # 用户前端
+  user-ui:
+    build:
+      context: ./frontend/user-ui
+      dockerfile: Dockerfile
+    ports:
+      - "81:80"
+    depends_on:
+      - user-api
+    networks:
+      - pandaspace-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
 
   # MongoDB 数据库
   mongodb:
@@ -55,6 +120,17 @@ services:
       - mongodb_data:/data/db
     networks:
       - pandaspace-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
 
   # Nginx 反向代理
   nginx:
@@ -66,10 +142,23 @@ services:
       - ./nginx/conf.d:/etc/nginx/conf.d
       - ./nginx/ssl:/etc/nginx/ssl
     depends_on:
-      - backend
-      - frontend
+      - admin-api
+      - user-api
+      - admin-ui
+      - user-ui
     networks:
       - pandaspace-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
 
 volumes:
   mongodb_data:
