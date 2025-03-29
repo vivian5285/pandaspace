@@ -183,4 +183,43 @@ main() {
 }
 
 # 执行主函数
-main "$@" 
+main "$@"
+
+# 设置工作目录
+cd "$(dirname "$0")"
+
+# 检查Python虚拟环境是否存在，如果不存在则创建
+if [ ! -d "venv" ]; then
+    echo "Creating Python virtual environment..."
+    python3 -m venv venv
+fi
+
+# 激活Python虚拟环境
+source venv/bin/activate
+
+# 安装后端依赖
+echo "Installing backend dependencies..."
+pip install -r backend/requirements.txt
+
+# 启动后端服务
+echo "Starting backend service..."
+cd backend
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload &
+BACKEND_PID=$!
+cd ..
+
+# 安装前端依赖
+echo "Installing frontend dependencies..."
+cd frontend
+npm install
+
+# 启动前端服务
+echo "Starting frontend service..."
+npm start &
+FRONTEND_PID=$!
+cd ..
+
+# 等待用户中断
+echo "Services are running. Press Ctrl+C to stop."
+trap "kill $BACKEND_PID $FRONTEND_PID" INT
+wait 

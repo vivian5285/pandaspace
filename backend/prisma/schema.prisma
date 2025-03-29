@@ -1,0 +1,197 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  email           String    @unique
+  password        String
+  name            String
+  initialInvestment Float
+  riskProfile     RiskProfile?
+  referrer        User?     @relation("UserReferrals", fields: [referrerId], references: [id])
+  referrerId      String?   @db.ObjectId
+  referredUsers   User[]    @relation("UserReferrals")
+  tradingProfits  TradingProfit[]
+  referralEarnings ReferralEarning[] @relation("ReferrerEarnings")
+  referredEarnings ReferralEarning[] @relation("ReferredEarnings")
+  trades          Trade[]
+  errorLogs       ErrorLog[]
+  notifications   Notification[]
+  notificationLogs NotificationLog[]
+  activityLogs    UserActivityLog[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model RiskProfile {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   @unique @db.ObjectId
+  user        User     @relation(fields: [userId], references: [id])
+  score       Int      @default(5) // 1-10 风险评分
+  maxLeverage  Int      @default(3) // 最大杠杆倍数
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model TradingProfit {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  profit    Float
+  type      String   // 'long' or 'short'
+  date      DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ReferralEarning {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  referrerId  String   @db.ObjectId
+  referrer    User     @relation("ReferrerEarnings", fields: [referrerId], references: [id])
+  userId      String   @db.ObjectId
+  user        User     @relation("ReferredEarnings", fields: [userId], references: [id])
+  earnings    Float
+  type        String   // '1st' or '2nd'
+  date        DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model PlatformFee {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  amount      Float
+  type        String   // 'trade', 'withdrawal', etc.
+  date        DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Strategy {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  description String
+  type        String   // 'scalping', 'grid', 'supertrend'
+  parameters  Json
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Trade {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   @db.ObjectId
+  user        User     @relation(fields: [userId], references: [id])
+  strategyId  String   @db.ObjectId
+  strategy    Strategy @relation(fields: [strategyId], references: [id])
+  symbol      String
+  type        String   // 'long' or 'short'
+  entryPrice  Float
+  exitPrice   Float?
+  quantity    Float
+  profit      Float?
+  status      String   // 'open', 'closed', 'cancelled'
+  executionLogs TradeExecutionLog[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model MarketData {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  symbol        String
+  currentPrice  Float
+  priceChange   Float
+  volume        Float
+  timestamp     DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model ErrorLog {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  type      String
+  message   String
+  stack     String?
+  path      String?
+  method    String?
+  userId    String?  @db.ObjectId
+  user      User?    @relation(fields: [userId], references: [id])
+  timestamp DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PerformanceMetric {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  endpoint  String
+  duration  Float
+  timestamp DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Alert {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  type      String
+  message   String
+  severity  String
+  timestamp DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  type      String
+  title     String
+  message   String
+  data      Json?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model NotificationLog {
+  id             String       @id @default(auto()) @map("_id") @db.ObjectId
+  notificationId String       @db.ObjectId
+  notification   Notification @relation(fields: [notificationId], references: [id])
+  userId         String       @db.ObjectId
+  user           User         @relation(fields: [userId], references: [id])
+  type           String
+  status         String
+  timestamp      DateTime     @default(now())
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model TradeExecutionLog {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  tradeId   String   @db.ObjectId
+  trade     Trade    @relation(fields: [tradeId], references: [id])
+  status    String
+  error     String?
+  timestamp DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model UserActivityLog {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  action    String
+  details   String?
+  timestamp DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+} 
