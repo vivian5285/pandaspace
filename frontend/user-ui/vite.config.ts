@@ -12,9 +12,18 @@ export default defineConfig({
     }
   },
   server: {
-    port: 4000,
+    port: 4002,
     proxy: {
-      '/api': 'http://localhost:3000'
+      '/api': 'http://localhost:3002'
     }
   },
+  build: {
+    outDir: 'dist',
+    sourcemap: true,
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html')
+      }
+    }
+  }
 }); 

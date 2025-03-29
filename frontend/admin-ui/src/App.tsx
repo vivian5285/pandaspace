@@ -1,8 +1,10 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
-import VideoManagement from './pages/VideoManagement';
+import UserManagement from './pages/UserManagement';
+import StrategyManagement from './pages/StrategyManagement';
+import SystemSettings from './pages/SystemSettings';
 
 function App() {
   return (
@@ -10,7 +12,9 @@ function App() {
       <Layout>
         <Routes>
           <Route path="/" element={<Dashboard />} />
-          <Route path="/admin/videos" element={<VideoManagement />} />
+          <Route path="/users" element={<UserManagement />} />
+          <Route path="/strategies" element={<StrategyManagement />} />
+          <Route path="/settings" element={<SystemSettings />} />
         </Routes>
       </Layout>
     </Router>

@@ -10,7 +10,7 @@ services:
       - "3001:3000"
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=mongodb://mongodb:27017/pandaspace
+      - DATABASE_URL=mongodb://admin:admin123@mongodb:27017/pandaspace?authSource=admin
       - JWT_SECRET=${JWT_SECRET}
       - BINANCE_API_KEY=${BINANCE_API_KEY}
       - BINANCE_API_SECRET=${BINANCE_API_SECRET}
@@ -42,7 +42,7 @@ services:
       - "3002:3000"
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=mongodb://mongodb:27017/pandaspace
+      - DATABASE_URL=mongodb://admin:admin123@mongodb:27017/pandaspace?authSource=admin
       - JWT_SECRET=${JWT_SECRET}
       - BINANCE_API_KEY=${BINANCE_API_KEY}
       - BINANCE_API_SECRET=${BINANCE_API_SECRET}
@@ -116,6 +116,9 @@ services:
     image: mongo:latest
     ports:
       - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=admin123
     volumes:
       - mongodb_data:/data/db
     networks:
