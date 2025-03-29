@@ -7,8 +7,8 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
-    <div className="app-layout">
-      <header className="app-header">
+    <div className="user-layout">
+      <header className="user-header">
         <nav>
           <ul>
             <li><Link to="/">Home</Link></li>
@@ -17,11 +17,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           </ul>
         </nav>
       </header>
-      <main className="app-main">
+      <main className="user-main">
         {children}
       </main>
-      <footer className="app-footer">
-        <p>&copy; 2024 Trading Platform. All rights reserved.</p>
+      <footer className="user-footer">
+        <p>&copy; 2024 Panda Trade. All rights reserved.</p>
       </footer>
     </div>
   );
