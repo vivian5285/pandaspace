@@ -16,9 +16,8 @@ ENV VITE_API_URL=$VITE_API_URL
 ENV NODE_ENV=production
 ENV VITE_BUILD_MODE=production
 
-# 使用 node 直接执行 tsc 和 vite，添加更多构建选项
-RUN node ./node_modules/typescript/bin/tsc && \
-    node ./node_modules/vite/bin/vite.js build --mode production
+# 使用 npm 脚本执行构建
+RUN npm run build
 
 # 生产阶段
 FROM nginx:alpine
